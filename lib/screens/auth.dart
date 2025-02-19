@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+final _firebase = FirebaseAuth.instance;
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -13,14 +16,53 @@ class _AuthScreenState extends State<AuthScreen> {
   var _isLogin = true;
   var _enterEmail = '';
   var _enterPassword = '';
+  var _isLoading = false;
 
-  void _submit() {
+  void _submit() async {
     final isValid = _formKey.currentState!.validate();
 
-    if (isValid) {
-      _formKey.currentState!.save();
-      print(_enterEmail);
-      print(_enterPassword);
+    if (!isValid) {
+      return;
+    }
+
+    _formKey.currentState!.save();
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (_isLogin) {
+        final userCredentials = await _firebase.signInWithEmailAndPassword(
+            email: _enterEmail, password: _enterPassword);
+        print(userCredentials);
+      } else {
+        await _firebase.createUserWithEmailAndPassword(
+            email: _enterEmail, password: _enterPassword);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      var errorMessage = 'Authentication failed.';
+      if (e.code == 'email-already-in-use') {
+        errorMessage = 'This email is already registered.';
+      } else if (e.code == 'user-not-found') {
+        errorMessage = 'No user found with this email.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Incorrect password.';
+      }
+
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -82,15 +124,17 @@ class _AuthScreenState extends State<AuthScreen> {
                             const SizedBox(
                               height: 12,
                             ),
-                            ElevatedButton(
-                              onPressed: _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context)
-                                    .colorScheme
-                                    .primaryContainer,
+                            if (_isLoading) const CircularProgressIndicator(),
+                            if (!_isLoading)
+                              ElevatedButton(
+                                onPressed: _submit,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
+                                ),
+                                child: Text(_isLogin ? 'Login' : 'Sign Up'),
                               ),
-                              child: Text(_isLogin ? 'Login' : 'Sign Up'),
-                            ),
                             TextButton(
                               onPressed: () {
                                 setState(() {
@@ -99,7 +143,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               },
                               child: Text(_isLogin
                                   ? 'Create an account'
-                                  : 'I already have an accont.'),
+                                  : 'I already have an account.'),
                             )
                           ],
                         )),
