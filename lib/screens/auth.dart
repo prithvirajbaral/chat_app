@@ -51,7 +51,7 @@ class _AuthScreenState extends State<AuthScreen> {
             .set({
           'first_name': _enterFirstName,
           'last_name': _enterLastName,
-          'user_name' : 'to be ...',
+          'user_name': _enterUserName,
           'email': _enterEmail,
         });
       }
@@ -127,6 +127,23 @@ class _AuthScreenState extends State<AuthScreen> {
                               },
                               onSaved: (value) {
                                 _enterLastName = value!;
+                              },
+                            ),
+                          if (!_isLogin)
+                            TextFormField(
+                              validator: (value) {
+                                if (value == null ||
+                                    value.isEmpty ||
+                                    value.trim().length < 4) {
+                                  return 'Please enter a valid username at least 4 characters';
+                                }
+                                return null;
+                              },
+                              decoration:
+                                  const InputDecoration(labelText: 'Username'),
+                              enableSuggestions: false,
+                              onSaved: (value) {
+                                _enterUserName = value!;
                               },
                             ),
                           TextFormField(
