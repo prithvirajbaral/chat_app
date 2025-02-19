@@ -45,10 +45,6 @@ class _AuthScreenState extends State<AuthScreen> {
       var errorMessage = 'Authentication failed.';
       if (e.code == 'email-already-in-use') {
         errorMessage = 'This email is already registered.';
-      } else if (e.code == 'user-not-found') {
-        errorMessage = 'No user found with this email.';
-      } else if (e.code == 'wrong-password') {
-        errorMessage = 'Incorrect password.';
       }
 
       ScaffoldMessenger.of(context).clearSnackBars();
